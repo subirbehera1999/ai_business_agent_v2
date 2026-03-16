@@ -65,8 +65,8 @@ class Settings(BaseSettings):
     RAZORPAY_CURRENCY: str = Field(default="INR")
 
     # ── WhatsApp ─────────────────────────────────────────────────────────────
-    WHATSAPP_API_TOKEN: str = Field(...)
-    WHATSAPP_PHONE_NUMBER_ID: str = Field(...)
+    META_WHATSAPP_ACCESS_TOKEN: str = Field(...)
+    META_PHONE_NUMBER_ID: str = Field(...)
     WHATSAPP_BUSINESS_ACCOUNT_ID: str = Field(...)
     WHATSAPP_API_VERSION: str = Field(default="v19.0")
     WHATSAPP_API_BASE_URL: str = Field(default="https://graph.facebook.com")

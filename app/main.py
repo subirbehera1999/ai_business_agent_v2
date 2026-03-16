@@ -73,22 +73,6 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """
-    Manage application lifecycle: startup and shutdown.
-
-    Startup (before yield):
-      1. Connect database connection pool
-      2. Build shared service dependencies
-      3. Start background job scheduler
-
-    Shutdown (after yield):
-      4. Shut down scheduler gracefully (waits for running jobs)
-      5. Close database connection pool
-
-    Any exception during startup propagates and prevents the server from
-    starting, which is intentional — a misconfigured system should not serve
-    traffic.
-    """
     # ------------------------------------------------------------------
     # STARTUP
     # ------------------------------------------------------------------
@@ -106,8 +90,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Database connection pool opened", extra={"service": ServiceName.API})
 
     # 2. Build shared dependencies for the scheduler
-    #    These are stateless repository/service instances — safe to share.
     whatsapp_client       = WhatsAppClient()
+    await whatsapp_client.initialise()                                          # ← ADDED
+    logger.info("WhatsAppClient initialised", extra={"service": ServiceName.API})  # ← ADDED
     admin_notification    = AdminNotificationService(whatsapp_client=whatsapp_client)
     business_repo         = BusinessRepository()
     subscription_repo     = SubscriptionRepository()
@@ -126,7 +111,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     scheduler = SchedulerManager(context=scheduler_context)
     scheduler.start()
 
-    # Store on app.state so health endpoints can inspect scheduler status
     app.state.scheduler = scheduler
 
     logger.info(
@@ -155,11 +139,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         extra={"service": ServiceName.API},
     )
 
-    # 4. Shut down scheduler — wait=True ensures running jobs complete
+    # 4. Shut down scheduler
     scheduler.shutdown()
     logger.info("Scheduler shut down", extra={"service": ServiceName.API})
 
-    # 5. Close database connection pool
+    # 5. Close WhatsApp HTTP client                                             # ← ADDED
+    await whatsapp_client.close()                                               # ← ADDED
+    logger.info("WhatsAppClient closed", extra={"service": ServiceName.API})   # ← ADDED
+
+    # 6. Close database connection pool
     await disconnect_database()
     logger.info("Database connection pool closed", extra={"service": ServiceName.API})
 

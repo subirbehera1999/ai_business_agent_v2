@@ -316,7 +316,7 @@ async def _process_single_review(
         await ctx.review_repo.update_sentiment(
             ctx.db,
             review_id=review.id,
-            sentiment=sentiment_result.label,
+            sentiment=sentiment_result.sentiment,
             sentiment_score=sentiment_result.score,
         )
 

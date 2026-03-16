@@ -488,10 +488,17 @@ class CompetitorService:
         Raises:
             Exception: Any network or API error (caller handles per-competitor).
         """
-        place_data = await self._places_client.get_place_details(
-            place_id=place_id,
-            fields=["name", "rating", "user_ratings_total", "formatted_address", "opening_hours"],
+        api_result = await self._places_client.get_place_details(
+        place_id=place_id,
+        fields=["name", "rating", "user_ratings_total", "formatted_address", "opening_hours"],
         )
+
+        if not api_result.success:
+            raise RuntimeError(
+                f"Places API error for place_id={place_id}: {api_result.error}"
+            )
+
+        place_data = api_result.data  # This is the actual dict
 
         return CompetitorSnapshot(
             place_id=place_id,
