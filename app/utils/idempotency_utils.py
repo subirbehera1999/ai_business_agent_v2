@@ -29,7 +29,7 @@ import hashlib
 import logging
 import uuid
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Union
 
 from app.config.constants import (
     IDEMPOTENCY_KEY_ALERT_SEND,
@@ -50,8 +50,8 @@ logger = logging.getLogger(ServiceName.API)
 # ==============================================================================
 
 def make_review_reply_key(
-    business_id: uuid.UUID,
-    review_id: uuid.UUID,
+    business_id: Union[uuid.UUID, str],
+    review_id: Union[uuid.UUID, str],
 ) -> str:
     """
     Generate the idempotency key for an AI review reply generation attempt.
